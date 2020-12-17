@@ -8,6 +8,7 @@ screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Wheel')
 fps = 60
 deg = 0
+choice = ''
 data = eval(open('user data.txt', 'r').read())
 
 
@@ -50,6 +51,24 @@ new_deg.image = new_deg_image
 new_deg.rect = new_deg.image.get_rect()
 new_deg.rect.center = width - 70, height // 2
 
+black_image = load_image('black.png')
+black = pygame.sprite.Sprite(all_sprites)
+black.image = black_image
+black.rect = black.image.get_rect()
+black.rect.center = width - 70 * 2 - 20, height // 2
+
+red_image = load_image('red.png')
+red = pygame.sprite.Sprite(all_sprites)
+red.image = red_image
+red.rect = red.image.get_rect()
+red.rect.center = black.rect.center[0] - 90, black.rect.center[1]
+
+green_image = load_image('green.png')
+green = pygame.sprite.Sprite(all_sprites)
+green.image = green_image
+green.rect = green.image.get_rect()
+green.rect.center = red.rect.center[0] - 90, red.rect.center[1]
+
 hero_image = load_image('wheel4.png')
 hero = pygame.sprite.Sprite(all_sprites)
 hero.image = hero_image
@@ -74,8 +93,21 @@ while running:
         key = pygame.key.get_pressed()
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not spin:
             mous_x, mous_y = pygame.mouse.get_pos()
-            if (mous_x in range(list(new_deg.rect)[0], list(new_deg.rect)[0] + list(new_deg.rect)[2])) and (mous_y in range(list(new_deg.rect)[1], list(new_deg.rect)[1] + list(new_deg.rect)[3])):
-                hero.image, hero.rect, deg = rot_center(defhero.image, hero.rect, 0)
+            for i in [new_deg, black, red, green]:
+                if (mous_x in range(list(i.rect)[0], list(i.rect)[0] + list(i.rect)[2])) and (mous_y in range(list(i.rect)[1], list(i.rect)[1] + list(i.rect)[3])):
+                    centre = i.rect.center
+                    print(centre)
+                    if centre == (1130, 400):
+                        print('deg = 0')
+                        hero.image, hero.rect, deg = rot_center(defhero.image, hero.rect, 0)
+                    elif centre == (1040, 400):
+                        choice = 'Black'
+                    elif centre == (950, 400):
+                        choice = 'Red'
+                    elif centre == (860, 400):
+                        choice =  'Green'
+
+
         if key[pygame.K_LEFT]:
             speed -= 1
         if key[pygame.K_RIGHT]:
