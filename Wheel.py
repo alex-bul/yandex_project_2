@@ -8,8 +8,10 @@ screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Wheel')
 fps = 60
 deg = 0
-choice = ''
+bet = 100
+chose = ''
 data = eval(open('user data.txt', 'r').read())
+coin = data[-1]
 
 
 def load_image(name, color_key=None):
@@ -27,6 +29,19 @@ def load_image(name, color_key=None):
     else:
         image = image.convert_alpha()
     return image
+
+
+def draw(screen, view, x, y, cent, size=50):
+    font = pygame.font.Font(None, size)
+    text = font.render(view, True, (0, 0, 0))
+    if cent:
+        text_x = x - text.get_width() // 2
+        text_y = y - text.get_height() // 2
+    else:
+        text_x = x
+        text_y = y
+
+    screen.blit(text, (text_x, text_y))
 
 
 def rot_center(image, rect, angle):
@@ -94,19 +109,20 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not spin:
             mous_x, mous_y = pygame.mouse.get_pos()
             for i in [new_deg, black, red, green]:
-                if (mous_x in range(list(i.rect)[0], list(i.rect)[0] + list(i.rect)[2])) and (mous_y in range(list(i.rect)[1], list(i.rect)[1] + list(i.rect)[3])):
+                if (mous_x in range(list(i.rect)[0], list(i.rect)[0] + list(i.rect)[2])) and (
+                        mous_y in range(list(i.rect)[1], list(i.rect)[1] + list(i.rect)[3])):
                     centre = i.rect.center
                     print(centre)
-                    if centre == (1130, 400):
+                    if centre == (1130, 400) and deg != 0:
                         print('deg = 0')
+                        coin -= 10
                         hero.image, hero.rect, deg = rot_center(defhero.image, hero.rect, 0)
                     elif centre == (1040, 400):
-                        choice = 'Black'
+                        chose = 'Black'
                     elif centre == (950, 400):
-                        choice = 'Red'
+                        chose = 'Red'
                     elif centre == (860, 400):
-                        choice =  'Green'
-
+                        chose = 'Green'
 
         if key[pygame.K_LEFT]:
             speed -= 1
@@ -114,7 +130,7 @@ while running:
             speed += 1
         if key[pygame.K_SPACE]:
             speed = 0
-        if event.type == pygame.MOUSEBUTTONDOWN and (event.button in [4, 5])and not spin:
+        if event.type == pygame.MOUSEBUTTONDOWN and (event.button in [4, 5]) and not spin:
             deg = 0
             cof = random.choice([-1, 1])
             speed = random.randint(10, 25) * cof
@@ -135,5 +151,8 @@ while running:
     screen.fill((255, 255, 255))
     all_sprites.draw(screen)
     clock.tick(fps)
+    draw(screen, view=f'You Chose: {chose}', x=825, y=290, cent=False, size=40)
+    draw(screen, view=f'You Bet: {bet}', x=825, y=325, cent=False, size=40)
+    draw(screen, view=f'You Coin: {coin}', x=width // 2, y=30, cent=True, size=50)
     pygame.display.flip()
 pygame.quit()
