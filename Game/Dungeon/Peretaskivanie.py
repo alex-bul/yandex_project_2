@@ -1,5 +1,6 @@
 import pygame
 import os
+import random
 
 pygame.init()
 size = width, height = 1000, 1000
@@ -105,13 +106,13 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        if key[pygame.K_RIGHT] and (key[pygame.K_1] or key[pygame.K_2]) and not change and len(heros) < 4:
+        if key[pygame.K_RIGHT] and (key[pygame.K_1] or key[pygame.K_2]) and not change and len(heros) < 50:
             all_sprites.remove(heros)
             if key[pygame.K_1]:
-                a = Assassin(x=x, y=0)
+                a = Assassin(x=random.randint(0, 900), y=random.randint(0, 900))
 
             if key[pygame.K_2]:
-                a = Berserk(x=x, y=0)
+                a = Berserk(x=random.randint(0, 900), y=random.randint(0, 900))
 
             x += step
             heros.append(a)
@@ -126,6 +127,11 @@ while running:
         if key[pygame.K_SPACE]:
             for i in heros:
                 i.sprite(2)
+                i.rect.center = (random.randint(0, 900), random.randint(0, 900))
+
+        if key[pygame.K_a]:
+            for i in heros:
+                i.rect.center = (500, 500)
 
     screen.fill((255, 255, 255))
     all_sprites.draw(screen)
