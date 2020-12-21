@@ -6,10 +6,10 @@ size = width, height = 1000, 1000
 pygame.display.set_caption('Перетаскивание')
 screen = pygame.display.set_mode(size)
 screen.fill((255, 255, 255))
-fps = 6000
-step = 100
+fps = 120
+step = 80
 running = True
-x = 0
+x = 80
 
 
 def load_image(name, color_key=None):
@@ -30,12 +30,15 @@ def load_image(name, color_key=None):
 
 
 class Character(pygame.sprite.Sprite):
-    def __init__(self, *group, name):
+    def __init__(self, *group, x, y, name):
         pygame.sprite.Sprite.__init__(self)
         super().__init__(*group)
         self.image = load_image(f'{name}.png')
         self.rect = self.image.get_rect()
-        self.def_rect = self.rect
+        self.rect[0] = x
+        self.rect[1] = y
+        self.def_rect = self.rect.copy()
+        self.click = False
         self.name = name
         self.health = 0
         self.armor = 0
@@ -50,32 +53,40 @@ class Character(pygame.sprite.Sprite):
             self.image = load_image(f'{self.name}_death.png')
 
     def update(self, *args):
+        if 'pos' in str(args[0]):
+            if args[0].type == pygame.MOUSEBUTTONUP and args[0].button == 1:
+                self.click = False
+                # self.rect = self.def_rect.copy()
 
-        if args and args[0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(args[0].pos):
-            self.sprite(state=2)
-        else:
-            self.sprite(state=1)
+            if (args and args[0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(args[0].pos)) or self.click:
+                mous_x, mous_y = args[0].pos
+                self.sprite(state=2)
+                self.click = True
+                self.rect.center = (mous_x, mous_y)
+
+            else:
+                self.sprite(state=1)
 
 
 class Assassin(Character):
-    def __init__(self):
-        Character.__init__(self, name='Assassin')
+    def __init__(self, x, y):
+        Character.__init__(self, x=x, y=y, name='Assassin')
 
 
 class Berserk(Character):
-    def __init__(self):
-        Character.__init__(self, name="berserk")
+    def __init__(self, x, y):
+        Character.__init__(self, x=x, y=y, name="berserk")
 
 
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 
-heros = [Assassin()]
+heros = [Assassin(x=0, y=0)]
 
-for i in heros:
-    print(list(i.rect.center)[0] + x, list(i.rect.center)[1])
-    i.rect.center = [list(i.rect.center)[0] + x, list(i.rect.center)[1]]
-    x += step
+# for i in heros:
+#     print(list(i.rect.center)[0] + x, list(i.rect.center)[1])
+#     i.rect.center = [list(i.rect.center)[0] + x, list(i.rect.center)[1]]
+#     x += step
 
 all_sprites.add(heros)
 key = pygame.key.get_pressed()
@@ -97,12 +108,11 @@ while running:
         if key[pygame.K_RIGHT] and (key[pygame.K_1] or key[pygame.K_2]) and not change and len(heros) < 4:
             all_sprites.remove(heros)
             if key[pygame.K_1]:
-                a = Assassin()
+                a = Assassin(x=x, y=0)
 
             if key[pygame.K_2]:
-                a = Berserk()
+                a = Berserk(x=x, y=0)
 
-            a.rect.center = [list(a.rect.center)[0] + x, list(a.rect.center)[1]]
             x += step
             heros.append(a)
             all_sprites.add(heros)
@@ -112,6 +122,10 @@ while running:
             heros = heros[:-1]
             x -= step
             all_sprites.add(heros)
+
+        if key[pygame.K_SPACE]:
+            for i in heros:
+                i.sprite(2)
 
     screen.fill((255, 255, 255))
     all_sprites.draw(screen)
