@@ -64,10 +64,17 @@ class Character(pygame.sprite.Sprite):
                 for i in args[1]:
                     if self.rect.colliderect(i.rect) and i.name != self.name and not i.health <= 0 and not self.flag:
                         self.flag = True
+                        print('-------------------------')
                         print(f'{i.health} - {self.damage - (i.armor / 2)}')
+                        print(f'health: {i.health}, armor: {i.armor}')
                         if (self.damage - (i.armor / 2)) > 0:
                             i.health -= self.damage - (i.armor / 2)
 
+                        else:
+                            i.health -= 1
+                        if i.armor >= self.damage * 0.1:
+                            i.armor -= self.damage * 0.1
+                        print(f'health: {i.health}, armor: {i.armor}')
                 self.rect.bottomleft = self.def_rect
 
             if (args and args[0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(args[0].pos)) or self.click:
@@ -76,7 +83,6 @@ class Character(pygame.sprite.Sprite):
                 self.click = True
                 self.flag = False
                 self.rect.center = (mous_x, mous_y)
-
 
             else:
                 self.sprite(state=1)
@@ -88,16 +94,17 @@ class Character(pygame.sprite.Sprite):
 class Assassin(Character):
     def __init__(self, x, y):
         Character.__init__(self, x=x, y=y, name=f'my_{my_name}', sprite_name='Assassin')
-        self.health = 100
-        self.damage = 20
+        self.health = 150
+        self.damage = 40
+        self.armor = 30
 
 
 class Berserk(Character):
     def __init__(self, x, y):
         Character.__init__(self, x=x, y=y, name=f'my_{my_name}', sprite_name="berserk")
-        self.health = 80
-        self.damage = 40
-        self.armor = 50
+        self.health = 200
+        self.damage = 80
+        self.armor = 60
 
 
 clock = pygame.time.Clock()
