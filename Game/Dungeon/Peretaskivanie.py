@@ -1,12 +1,14 @@
-import pygame
 import os
 import random
+
+import pygame
 
 pygame.init()
 size = width, height = 1000, 1000
 pygame.display.set_caption('Перетаскивание')
 screen = pygame.display.set_mode(size)
 screen.fill((255, 255, 255))
+rounds = 0
 fps = 600
 step = 80
 running = True
@@ -32,16 +34,43 @@ def load_image(name, color_key=None):
     return image
 
 
+def chance(rate=50):
+    res = random.randint(0, 100)
+    print(res)
+    rate = 100 - rate
+    if rate == 50:
+        return random.choice([0, 1])
+    if res >= rate:
+        return 1
+    else:
+        return 0
+
+
+def draw(screen, view, x, y, cent, size=50):
+    font = pygame.font.Font(None, size)
+    text = font.render(view, True, (0, 0, 0))
+    if cent:
+        text_x = x - text.get_width() // 2
+        text_y = y - text.get_height() // 2
+    else:
+        text_x = x
+        text_y = y
+
+    screen.blit(text, (text_x, text_y))
+
+
 class Character(pygame.sprite.Sprite):
     def __init__(self, *group, x, y, name=f'my_{my_name}', sprite_name):
         pygame.sprite.Sprite.__init__(self)
         super().__init__(*group)
+        self.chance = 0
         self.image = load_image(f'{sprite_name}.png')
         self.rect = self.image.get_rect()
         self.name = name
         self.rect.bottomleft = x, y
         self.def_rect = self.rect.bottomleft
         self.click = False
+        self.is_death = False
         self.sprite_name = sprite_name
         self.health = 1
         self.armor = 1
@@ -55,6 +84,10 @@ class Character(pygame.sprite.Sprite):
             self.image = load_image(f'{self.sprite_name}_attack.png')
         else:
             self.image = load_image(f'{self.sprite_name}_death.png')
+            self.health = 0
+
+        if 'enemy' in self.name:
+            self.image = pygame.transform.flip(self.image, True, False)
 
     def update(self, *args):
         if 'pos' in str(args[0]) and not self.health <= 0:
@@ -62,18 +95,21 @@ class Character(pygame.sprite.Sprite):
                     args[0].pos) and self.click:
                 self.click = False
                 for i in args[1]:
-                    if self.rect.colliderect(i.rect) and i.name != self.name and not i.health <= 0 and not self.flag:
+                    if self.rect.colliderect(i.rect) and i.name != self.name and not i.health <= 0 and not self.flag \
+                            and self.name[:-1] != i.name[:-1]:
+
                         self.flag = True
                         print('-------------------------')
+                        res = chance(self.chance)
                         print(f'{i.health} - {self.damage - (i.armor / 2)}')
                         print(f'health: {i.health}, armor: {i.armor}')
                         if (self.damage - (i.armor / 2)) > 0:
-                            i.health -= self.damage - (i.armor / 2)
+                            i.health -= int(self.damage - (i.armor / 2)) * res
 
                         else:
-                            i.health -= 1
+                            i.health -= 1 * chance(self.chance) * res
                         if i.armor >= self.damage * 0.1:
-                            i.armor -= self.damage * 0.1
+                            i.armor -= self.damage * 0.1 * res
                         print(f'health: {i.health}, armor: {i.armor}')
                 self.rect.bottomleft = self.def_rect
 
@@ -87,13 +123,17 @@ class Character(pygame.sprite.Sprite):
             else:
                 self.sprite(state=1)
 
-        if self.health <= 0:
+        if self.health <= 0 and not self.is_death:
             self.sprite()
+            self.is_death = True
+            self.rect = self.image.get_rect()
+            self.rect.bottomleft = self.def_rect
 
 
 class Assassin(Character):
     def __init__(self, x, y, name=f'my_{my_name}'):
         Character.__init__(self, x=x, y=y, name=name, sprite_name='Assassin')
+        self.chance = 80
         self.health = 150
         self.damage = 40
         self.armor = 30
@@ -102,18 +142,25 @@ class Assassin(Character):
 class Berserk(Character):
     def __init__(self, x, y, name=f'my_{my_name}'):
         Character.__init__(self, x=x, y=y, name=name, sprite_name="berserk")
-        self.health = 200
-        self.damage = 80
+        self.chance = 50
+        self.health = 175
+        self.damage = 65
         self.armor = 60
 
 
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 
-heros = [Assassin(x=2, y=y)]
-enemy = [Assassin(x=500, y=y, name='enemy_name_1'), Berserk(x=500 + step, y=y, name='enemy_name_2'),
-         Assassin(x=500 + step * 2, y=y, name='enemy_name_3'), Berserk(x=500 + step * 3, y=y, name='enemy_name_4')]
+heros = [Assassin(x=x, y=y)]
+x += step
 
+# Assassin(x=500, y=y, name='enemy_name_1'), Berserk(x=500 + step, y=y, name='enemy_name_2'),
+#          Assassin(x=500 + step * 2, y=y, name='enemy_name_3'), Berserk(x=500 + step * 3, y=y, name='enemy_name_4')
+
+enemy = [eval(random.choice(['Assassin', 'Berserk']) + i) for i in
+         ["(x=500, y=y, name='enemy_name_1')", "(x=500 + step, y=y, name='enemy_name_2')",
+          "(x=500 + step * 2, y=y, name='enemy_name_3')", "(x=500 + step * 3, y=y, name='enemy_name_4')"]]
+print(enemy)
 # for i in heros:
 #     print(list(i.rect.center)[0] + x, list(i.rect.center)[1])
 #     i.rect.center = [list(i.rect.center)[0] + x, list(i.rect.center)[1]]
@@ -163,7 +210,9 @@ while running:
 
     screen.fill((255, 255, 255))
     all_sprites.draw(screen)
-    all_sprites.update(event, enemy)
+    all_sprites.update(event, heros + enemy)
+    for i in heros + enemy:
+        draw(screen=screen, view=str(i.health), x=i.rect.center[0], y=i.rect.bottom - 90, cent=True, size=40)
     clock.tick(fps)
     pygame.display.flip()
 pygame.quit()
