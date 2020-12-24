@@ -92,16 +92,16 @@ class Character(pygame.sprite.Sprite):
 
 
 class Assassin(Character):
-    def __init__(self, x, y):
-        Character.__init__(self, x=x, y=y, name=f'my_{my_name}', sprite_name='Assassin')
+    def __init__(self, x, y, name=f'my_{my_name}'):
+        Character.__init__(self, x=x, y=y, name=name, sprite_name='Assassin')
         self.health = 150
         self.damage = 40
         self.armor = 30
 
 
 class Berserk(Character):
-    def __init__(self, x, y):
-        Character.__init__(self, x=x, y=y, name=f'my_{my_name}', sprite_name="berserk")
+    def __init__(self, x, y, name=f'my_{my_name}'):
+        Character.__init__(self, x=x, y=y, name=name, sprite_name="berserk")
         self.health = 200
         self.damage = 80
         self.armor = 60
@@ -110,7 +110,9 @@ class Berserk(Character):
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 
-heros = [Assassin(x=0, y=y)]
+heros = [Assassin(x=2, y=y)]
+enemy = [Assassin(x=500, y=y, name='enemy_name_1'), Berserk(x=500 + step, y=y, name='enemy_name_2'),
+         Assassin(x=500 + step * 2, y=y, name='enemy_name_3'), Berserk(x=500 + step * 3, y=y, name='enemy_name_4')]
 
 # for i in heros:
 #     print(list(i.rect.center)[0] + x, list(i.rect.center)[1])
@@ -118,6 +120,7 @@ heros = [Assassin(x=0, y=y)]
 #     x += step
 
 all_sprites.add(heros)
+all_sprites.add(enemy)
 key = pygame.key.get_pressed()
 clock = pygame.time.Clock()
 
@@ -160,7 +163,7 @@ while running:
 
     screen.fill((255, 255, 255))
     all_sprites.draw(screen)
-    all_sprites.update(event, heros)
+    all_sprites.update(event, enemy)
     clock.tick(fps)
     pygame.display.flip()
 pygame.quit()
