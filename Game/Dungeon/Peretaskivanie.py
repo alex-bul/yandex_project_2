@@ -1,6 +1,6 @@
 import os
 import random
-
+import time
 import pygame
 
 pygame.init()
@@ -12,18 +12,23 @@ rounds = 0
 fps = 600  # Отклик
 step = 80  # Пробел между персонажами
 running = True
-x = width // 2 - 200  # Координата первого персонажа
+player_1_x = width // 2 - 200  # Координата первого персонажа
+player_2_x = width // 2 + 150
 y = 400  # Отступ от верха экрана
-my_name = 0  # Номер персонажа
-my_sum_health = 0
-enemy_sum_health = 0
+player_1_name = 0  # Номер персонажа
+player_2_name = 0
+player_1_sum_health = 0
+player_2_sum_health = 0
+enter = False
 
 
 # Функция загрузки изображений
-def load_image(name, color_key=None):
+def load_image(name, color_key=None, scale=None):
     fullname = os.path.join('Res', name)
     try:
         image = pygame.image.load(fullname)
+        if scale:
+            image = pygame.transform.scale(image, scale)
     except pygame.error as message:
         print('Cannot load image:', name)
         raise SystemExit(message)
@@ -57,9 +62,9 @@ def draw(screen, view, x, y, cent, size=50, color=None):
     if color == 'Green':
         set_color = (0, 255, 55)
     elif color == 'Yellow':
-        set_color = (255, 255, 0)
+        set_color = (248, 252, 45)
     elif color == 'Red':
-        set_color = (255, 40, 40)
+        set_color = (255, 50, 50)
 
     font = pygame.font.Font(None, size)
     text = font.render(view, True, set_color)
@@ -83,15 +88,16 @@ class Background(pygame.sprite.Sprite):
 
 # Класс персонажа
 class Character(pygame.sprite.Sprite):
-    def __init__(self, *group, x, y, name=f'my_{my_name}', sprite_name):
+    def __init__(self, *group, x, y, name=f'my_{player_1_name}', sprite_name):
         pygame.sprite.Sprite.__init__(self)
         super().__init__(*group)
-        if 'enemy' in name:
+        if 'player_2' in name:
             self.motion = 1
         else:
             self.motion = 0
+        self.scale = None
         self.chance = 0  # Дефолтный шанс попадения
-        self.image = load_image(f'{sprite_name}.png')  # Загрузка изображения
+        self.image = load_image(f'{sprite_name}.png', scale=self.scale)  # Загрузка изображения
         self.rect = self.image.get_rect()
         self.name = name  # Имя персонажа
         self.rect.bottomleft = x, y  # Положение спрайта
@@ -108,14 +114,14 @@ class Character(pygame.sprite.Sprite):
     # Смена спрайта
     def sprite(self, state=None):
         if state == 1:
-            self.image = load_image(f'{self.sprite_name}.png')
+            self.image = load_image(f'{self.sprite_name}.png', scale=self.scale)
         elif state == 2:
-            self.image = load_image(f'{self.sprite_name}_attack.png')
+            self.image = load_image(f'{self.sprite_name}_attack.png', scale=self.scale)
         else:
-            self.image = load_image(f'{self.sprite_name}_death.png')
+            self.image = load_image(f'{self.sprite_name}_death.png', scale=self.scale)
             self.health = 0
 
-        if 'enemy' in self.name:
+        if 'player_2' in self.name:
             self.image = pygame.transform.flip(self.image, True, False)
 
     # Обновление действий с персонадами
@@ -134,6 +140,15 @@ class Character(pygame.sprite.Sprite):
                         res = chance(self.chance)
                         print(f'{i.health} - {self.damage - (i.armor / 2)}')
                         print(f'health: {i.health}, armor: {i.armor}')
+                        if res == 0:
+                            draw(screen, view='Miss', x=i.rect.center[0], y=i.rect.center[1], cent=True, size=50, color='Red')
+                            pygame.display.flip()
+                            time.sleep(0.5)
+                        else:
+                            draw(screen, view=str(-int(self.damage - (i.armor / 2)) * res), x=i.rect.center[0], y=i.rect.center[1], cent=True, size=50,
+                                 color='Red')
+                            pygame.display.flip()
+                            time.sleep(0.5)
                         if (self.damage - (i.armor / 2)) > 0:
                             i.health -= int(self.damage - (i.armor / 2)) * res
 
@@ -165,18 +180,18 @@ class Character(pygame.sprite.Sprite):
 
 # Класс Ассасина
 class Assassin(Character):
-    def __init__(self, x, y, name=f'my_{my_name}'):
+    def __init__(self, x, y, name=f'None'):
         Character.__init__(self, x=x, y=y, name=name, sprite_name='Assassin')
         self.chance = 80
         self.health = 150
         self.def_health = self.health
-        self.damage = 40
+        self.damage = 50
         self.armor = 30
 
 
 # Класс Берсерка
 class Berserk(Character):
-    def __init__(self, x, y, name=f'my_{my_name}'):
+    def __init__(self, x, y, name=f'None'):
         Character.__init__(self, x=x, y=y, name=name, sprite_name="berserk")
         self.chance = 50
         self.health = 175
@@ -190,24 +205,30 @@ all_sprites = pygame.sprite.Group()
 BackGround = Background('background.png', [0, 0])
 
 # Изначальные игрои
-heros = [Assassin(x=x, y=y)]
-x -= step
-
-# Assassin(x=500, y=y, name='enemy_name_1'), Berserk(x=500 + step, y=y, name='enemy_name_2'),
-#          Assassin(x=500 + step * 2, y=y, name='enemy_name_3'), Berserk(x=500 + step * 3, y=y, name='enemy_name_4')
+hero_first_player = [Assassin(x=player_1_x, y=y, name=f'player_1_{player_1_name}')]
+hero_second_player = [Assassin(x=player_2_x, y=y, name=f'player_2_{player_2_name}')]
+player_1_x -= step
+player_2_x += step
 
 # Генерация рандомных врагов
-enemy = [eval(random.choice(['Assassin', 'Berserk']) + i) for i in
-         ["(x=width // 2 + 150, y=y, name='enemy_name_1')", "(x=width // 2 + 150 + step, y=y, name='enemy_name_2')",
-          "(x=width // 2 + 150 + step * 2, y=y, name='enemy_name_3')",
-          "(x=width // 2 + 150 + step * 3, y=y, name='enemy_name_4')"]]
-# for i in heros:
-#     print(list(i.rect.center)[0] + x, list(i.rect.center)[1])
-#     i.rect.center = [list(i.rect.center)[0] + x, list(i.rect.center)[1]]
-#     x += step
+# enemy = [eval(random.choice(['Assassin', 'Berserk']) + i) for i in
+#          ["(player_1_x=width // 2 + 150, y=y, name='enemy_name_1')", "(player_1_x=width // 2 + 150 + step, y=y, name='enemy_name_2')",
+#           "(player_1_x=width // 2 + 150 + step * 2, y=y, name='enemy_name_3')",
+#           "(player_1_x=width // 2 + 150 + step * 3, y=y, name='enemy_name_4')"]]
 
-all_sprites.add(heros)
-all_sprites.add(enemy)
+# for i in hero_first_player:
+#     print(list(i.rect.center)[0] + player_1_x, list(i.rect.center)[1])
+#     i.rect.center = [list(i.rect.center)[0] + player_1_x, list(i.rect.center)[1]]
+#     player_1_x += step
+#
+# for i in enemy:
+#     eval(random.choice(['Assassin', 'Berserk']) + "(player_1_x=width // 2 + 150, y=y, name=f'player_2_{player_2_name}')")
+#     print(list(i.rect.center)[0] + player_1_x, list(i.rect.center)[1])
+#     i.rect.center = [list(i.rect.center)[0] + player_1_x, list(i.rect.center)[1]]
+#     player_1_x += step
+
+all_sprites.add(hero_first_player)
+all_sprites.add(hero_second_player)
 key = pygame.key.get_pressed()
 clock = pygame.time.Clock()
 
@@ -224,38 +245,63 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+        if key[pygame.K_RETURN]:
+            enter = True
+            print(1)
+
         # Добавление персонажей
-        if key[pygame.K_RIGHT] and (key[pygame.K_1] or key[pygame.K_2]) and not change and len(heros) < 4:
-            all_sprites.remove(heros)
-            my_name += 1
+        if (key[pygame.K_RIGHT] and (key[pygame.K_1] or key[pygame.K_2]) and not change and len(hero_first_player) < 4) and not enter:
+            all_sprites.remove(hero_first_player)
+            player_1_name += 1
             if key[pygame.K_1]:
-                a = Assassin(x=x, y=y)  # Добавить Ассасина
+                a = Assassin(x=player_1_x, y=y, name=f'player_1_{player_1_name}')  # Добавить Ассасина
 
-            if key[pygame.K_2]:
-                a = Berserk(x=x, y=y)  # Добавить Берсерка
+            elif key[pygame.K_2]:
+                a = Berserk(x=player_1_x, y=y, name=f'player_1_{player_1_name}')  # Добавить Берсерка
 
-            x -= step
-            heros.append(a)
-            all_sprites.add(heros)
+            player_1_x -= step
+            hero_first_player.append(a)
+            all_sprites.add(hero_first_player)
 
-        if key[pygame.K_LEFT] and len(heros) > 0 and not change:  # Убрать последнего персонажа
-            all_sprites.remove(heros)
-            my_name -= 1
-            heros = heros[:-1]
-            x += step
-            all_sprites.add(heros)
+        elif (key[pygame.K_RIGHT] and (key[pygame.K_1] or key[pygame.K_2]) and not change and len(hero_second_player) < 4) and enter:
+
+            all_sprites.remove(hero_second_player)
+            player_2_name += 1
+            if key[pygame.K_1]:
+                a = Assassin(x=player_2_x, y=y, name=f'player_2_{player_2_name}')  # Добавить Ассасина
+
+            elif key[pygame.K_2]:
+                a = Berserk(x=player_2_x, y=y, name=f'player_2_{player_2_name}')  # Добавить Берсерка
+
+            player_2_x += step
+            hero_second_player.append(a)
+            all_sprites.add(hero_second_player)
+
+        if (key[pygame.K_LEFT] and len(hero_first_player) > 0 and not change) and not enter:  # Убрать последнего персонажа
+            all_sprites.remove(hero_first_player)
+            player_1_name -= 1
+            hero_first_player = hero_first_player[:-1]
+            player_1_x += step
+            all_sprites.add(hero_first_player)
+
+        elif (key[pygame.K_LEFT] and len(hero_second_player) > 0 and not change) and enter:
+            all_sprites.remove(hero_second_player)
+            player_2_name -= 1
+            hero_second_player = hero_second_player[:-1]
+            player_2_x -= step
+            all_sprites.add(hero_second_player)
 
     screen.fill((255, 255, 255))
     screen.blit(BackGround.image, BackGround.rect)
     all_sprites.draw(screen)
-    all_sprites.update(event, heros + enemy)
+    all_sprites.update(event, hero_first_player + hero_second_player)
 
-    my_sum_health, enemy_sum_health = 0, 0
-    for i in heros + enemy:  # Отрисовка здоровья
-        if 'enemy' not in i.name:
-            my_sum_health += i.health
+    player_1_sum_health, player_2_sum_health = 0, 0
+    for i in hero_first_player + hero_second_player:  # Отрисовка здоровья
+        if 'player_2' not in i.name:
+            player_1_sum_health += i.health
         else:
-            enemy_sum_health += i.health
+            player_2_sum_health += i.health
         if i.def_health * 0.75 <= i.health <= i.def_health:
             color = 'Green'
         elif i.def_health * 0.50 <= i.health <= i.def_health * 0.75:
@@ -270,7 +316,8 @@ while running:
     else:
         draw(screen, view='=>', x=width // 2, y=y - 30, cent=True, size=50, color='Red')
 
-    draw(screen=screen, view=f'{my_sum_health} vs {enemy_sum_health}', x=width // 2, y=y - 150, cent=True, size=60,
+    draw(screen=screen, view=f'{player_1_sum_health} vs {player_2_sum_health}', x=width // 2, y=y - 150, cent=True,
+         size=60,
          color='Green')
     clock.tick(fps)
     pygame.display.flip()
