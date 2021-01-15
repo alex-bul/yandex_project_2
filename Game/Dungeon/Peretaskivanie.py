@@ -144,6 +144,7 @@ class Character(pygame.sprite.Sprite):
                             and self.name[:-1] != i.name[:-1]:
                         if self.sprite_name == 'Assassin':
                             rounds -= 0.5
+                        death_sound.play()
                         end_change = True
                         self.flag = True
                         print('-------------------------')
@@ -188,7 +189,7 @@ class Character(pygame.sprite.Sprite):
             self.is_death = True
             self.rect = self.image.get_rect()
             self.rect.bottomleft = self.def_rect
-            death_sound.play()
+
 
 
 # Класс Ассасина
