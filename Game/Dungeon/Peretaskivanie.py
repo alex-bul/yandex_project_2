@@ -2,6 +2,8 @@ import os
 import random
 import time
 import pygame
+from os import path
+
 
 pygame.init()
 size = width, height = 1920, 1080  # Размер окна
@@ -20,6 +22,11 @@ player_2_name = 0
 player_1_sum_health = 0
 player_2_sum_health = 0
 enter = False
+end_change = False
+snd_dir = path.join(path.dirname(__file__), 'Res')
+pygame.mixer.music.set_volume(1)
+death_sound = pygame.mixer.Sound(path.join(snd_dir, 'AAA.mp3'))
+
 
 
 # Функция загрузки изображений
@@ -50,7 +57,7 @@ def chance(rate=50):
     if rate == 50:
         return random.choice([0, 1])
     if res >= rate:
-        return 1
+        return 1 * random.gauss(1, 0.2)
     else:
         return 0
 
@@ -92,9 +99,9 @@ class Character(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         super().__init__(*group)
         if 'player_2' in name:
-            self.motion = 1
+            self.motion = [1, 1.5]
         else:
-            self.motion = 0
+            self.motion = [0, 0.5]
         self.scale = None
         self.chance = 0  # Дефолтный шанс попадения
         self.image = load_image(f'{sprite_name}.png', scale=self.scale)  # Загрузка изображения
@@ -126,36 +133,41 @@ class Character(pygame.sprite.Sprite):
 
     # Обновление действий с персонадами
     def update(self, *args):
-        global rounds
-        if 'pos' in str(args[0]) and not self.health <= 0 and rounds % 2 == self.motion:
+        global rounds, end_change
+        if 'pos' in str(args[0]) and not self.health <= 0 and rounds % 2 in self.motion:
             if args[0].type == pygame.MOUSEBUTTONUP and args[0].button == 1 and self.rect.collidepoint(
                     args[0].pos) and self.click:
                 self.click = False
+
                 for i in args[1]:
                     if self.rect.colliderect(i.rect) and i.name != self.name and not i.health <= 0 and not self.flag \
                             and self.name[:-1] != i.name[:-1]:
-
+                        if self.sprite_name == 'Assassin':
+                            rounds -= 0.5
+                        end_change = True
                         self.flag = True
                         print('-------------------------')
                         res = chance(self.chance)
                         print(f'{i.health} - {self.damage - (i.armor / 2)}')
                         print(f'health: {i.health}, armor: {i.armor}')
                         if res == 0:
-                            draw(screen, view='Miss', x=i.rect.center[0], y=i.rect.center[1], cent=True, size=50, color='Red')
-                            pygame.display.flip()
-                            time.sleep(0.5)
-                        else:
-                            draw(screen, view=str(-int(self.damage - (i.armor / 2)) * res), x=i.rect.center[0], y=i.rect.center[1], cent=True, size=50,
+                            draw(screen, view='Miss', x=i.rect.center[0], y=i.rect.center[1], cent=True, size=50,
                                  color='Red')
                             pygame.display.flip()
                             time.sleep(0.5)
-                        if (self.damage - (i.armor / 2)) > 0:
-                            i.health -= int(self.damage - (i.armor / 2)) * res
+                        else:
+                            draw(screen, view=str(-int(self.damage - (i.armor / 2) * res)), x=i.rect.center[0],
+                                 y=i.rect.center[1], cent=True, size=50,
+                                 color='Red')
+                            pygame.display.flip()
+                            time.sleep(0.5)
+                        if (self.damage - (i.armor / 2)) * res > 0:
+                            i.health -= int(self.damage - (i.armor / 2) * res)
 
                         else:
-                            i.health -= 1 * chance(self.chance) * res
-                        if i.armor >= self.damage * 0.1:
-                            i.armor -= self.damage * 0.1 * res
+                            i.health -= int(1 * res)
+                        if i.armor >= int(self.damage * 0.1 * res):
+                            i.armor -= int(self.damage * 0.1 * res)
                         print(f'health: {i.health}, armor: {i.armor}')
                         rounds += 1
                 self.rect.bottomleft = self.def_rect
@@ -176,6 +188,7 @@ class Character(pygame.sprite.Sprite):
             self.is_death = True
             self.rect = self.image.get_rect()
             self.rect.bottomleft = self.def_rect
+            death_sound.play()
 
 
 # Класс Ассасина
@@ -186,7 +199,7 @@ class Assassin(Character):
         self.health = 150
         self.def_health = self.health
         self.damage = 50
-        self.armor = 30
+        self.armor = 37
 
 
 # Класс Берсерка
@@ -209,23 +222,6 @@ hero_first_player = [Assassin(x=player_1_x, y=y, name=f'player_1_{player_1_name}
 hero_second_player = [Assassin(x=player_2_x, y=y, name=f'player_2_{player_2_name}')]
 player_1_x -= step
 player_2_x += step
-
-# Генерация рандомных врагов
-# enemy = [eval(random.choice(['Assassin', 'Berserk']) + i) for i in
-#          ["(player_1_x=width // 2 + 150, y=y, name='enemy_name_1')", "(player_1_x=width // 2 + 150 + step, y=y, name='enemy_name_2')",
-#           "(player_1_x=width // 2 + 150 + step * 2, y=y, name='enemy_name_3')",
-#           "(player_1_x=width // 2 + 150 + step * 3, y=y, name='enemy_name_4')"]]
-
-# for i in hero_first_player:
-#     print(list(i.rect.center)[0] + player_1_x, list(i.rect.center)[1])
-#     i.rect.center = [list(i.rect.center)[0] + player_1_x, list(i.rect.center)[1]]
-#     player_1_x += step
-#
-# for i in enemy:
-#     eval(random.choice(['Assassin', 'Berserk']) + "(player_1_x=width // 2 + 150, y=y, name=f'player_2_{player_2_name}')")
-#     print(list(i.rect.center)[0] + player_1_x, list(i.rect.center)[1])
-#     i.rect.center = [list(i.rect.center)[0] + player_1_x, list(i.rect.center)[1]]
-#     player_1_x += step
 
 all_sprites.add(hero_first_player)
 all_sprites.add(hero_second_player)
@@ -250,7 +246,8 @@ while running:
             print(1)
 
         # Добавление персонажей
-        if (key[pygame.K_RIGHT] and (key[pygame.K_1] or key[pygame.K_2]) and not change and len(hero_first_player) < 4) and not enter:
+        if (key[pygame.K_RIGHT] and (key[pygame.K_1] or key[pygame.K_2]) and not change and len(
+                hero_first_player) < 4) and not enter and not end_change:
             all_sprites.remove(hero_first_player)
             player_1_name += 1
             if key[pygame.K_1]:
@@ -263,7 +260,8 @@ while running:
             hero_first_player.append(a)
             all_sprites.add(hero_first_player)
 
-        elif (key[pygame.K_RIGHT] and (key[pygame.K_1] or key[pygame.K_2]) and not change and len(hero_second_player) < 4) and enter:
+        elif (key[pygame.K_RIGHT] and (key[pygame.K_1] or key[pygame.K_2]) and not change and len(
+                hero_second_player) < 4) and enter and not end_change:
 
             all_sprites.remove(hero_second_player)
             player_2_name += 1
@@ -277,14 +275,15 @@ while running:
             hero_second_player.append(a)
             all_sprites.add(hero_second_player)
 
-        if (key[pygame.K_LEFT] and len(hero_first_player) > 0 and not change) and not enter:  # Убрать последнего персонажа
+        if (key[pygame.K_LEFT] and len(
+                hero_first_player) > 0 and not change) and not enter and not end_change:  # Убрать последнего персонажа
             all_sprites.remove(hero_first_player)
             player_1_name -= 1
             hero_first_player = hero_first_player[:-1]
             player_1_x += step
             all_sprites.add(hero_first_player)
 
-        elif (key[pygame.K_LEFT] and len(hero_second_player) > 0 and not change) and enter:
+        elif (key[pygame.K_LEFT] and len(hero_second_player) > 0 and not change) and enter and not end_change:
             all_sprites.remove(hero_second_player)
             player_2_name -= 1
             hero_second_player = hero_second_player[:-1]
@@ -311,7 +310,7 @@ while running:
         draw(screen=screen, view=str(i.health), x=i.rect.center[0], y=i.rect.bottom - 90, cent=True, size=40,
              color=color)
 
-    if rounds % 2 == 0:
+    if rounds % 2 in [0, 0.5]:
         draw(screen, view='<=', x=width // 2, y=y - 30, cent=True, size=50, color='Red')
     else:
         draw(screen, view='=>', x=width // 2, y=y - 30, cent=True, size=50, color='Red')
