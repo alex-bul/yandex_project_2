@@ -1,6 +1,7 @@
 import pygame
 import os
 import random
+import sqlite3
 
 pygame.init()
 size = width, height = 1200, 800
@@ -41,6 +42,18 @@ def results():
         coin += bet * 5
     elif ((25.5 <= deg <= 77) or (128.5 <= deg <= 180) or (231.5 <= deg <= 283)) and chose == 'Red':
         coin += bet * 2
+    update_data_base()
+
+
+def update_data_base():
+    con = sqlite3.connect("Res/data.db")
+    cur = con.cursor()
+    cur.execute(f"""UPDATE data SET score = '{coin}' WHERE login = '{data[2]}'""")
+    result = list(cur.execute(f"""SELECT * FROM data where login = '{data[2]}'""").fetchone())
+    with open('user data.txt', 'w') as f:
+        f.write(str(result))
+    con.commit()
+    con.close()
 
 
 def draw(screen, view, x, y, cent, size=50):
@@ -181,6 +194,7 @@ while running:
             speed = random.randint(10, 25) * cof
             coin -= bet
             spin = True
+            update_data_base()
     if spin:
         if (speed >= 0 and cof == 1) or (speed <= 0 and cof == -1):
             if speed < 5 and cof == 1 or speed > -5 and cof == -1:
