@@ -1,16 +1,15 @@
 import sqlite3
 import sys
-from PyQt5 import uic
-from PyQt5 import QtWidgets
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem
-from PyQt5.Qt import QImage
-from PyQt5.Qt import QSize
-from PyQt5.Qt import QPalette
-from PyQt5.Qt import QBrush
-from PyQt5.Qt import QIcon
-from PyQt5.QtGui import QColor
+import os
+import subprocess
+import pathlib
+from random import randint
+from PyQt5 import (uic, QtWidgets, QtGui)
+from PyQt5.Qt import (QImage, QPalette, QBrush)
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import (QIcon, QColor)
+from PyQt5.QtWidgets import (QApplication, QWidget, QListWidget, QStackedWidget,
+                             QHBoxLayout, QListWidgetItem, QLabel, QTableWidgetItem, QMainWindow)
 
 
 class Start_Window(QMainWindow):
@@ -89,6 +88,9 @@ class Start_Window(QMainWindow):
     def guest(self):
         with open('user data.txt', 'w') as f:
             f.write('["None", "Guest", "None", "None", 0]')
+        self.close()
+        self.launcher = Launcher()
+        self.launcher.show()
 
 
 class Launcher(QMainWindow):
@@ -96,8 +98,71 @@ class Launcher(QMainWindow):
         super().__init__()
         uic.loadUi('UI/Launcher.ui', self)
         self.setWindowTitle('Launcher')
+        self.resize(800, 600)
+        # Левый и правый макет (один QListWidget слева + QStackedWidget справа)
+        layout = QHBoxLayout(self, spacing=0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        # QListWidget слева
+        print(os.listdir('Game'))
+        self.names = os.listdir('Game')
+        self.initUi()
+        self.Crazy_Fox.setStyleSheet("background-image: url(Res/Crazy Fox.png)")
+        self.Dungeon.setStyleSheet("background-image: url(Res/Dungeon.png)")
+        self.Wheel.setStyleSheet("background-image: url(Res/Wheel.png)")
+        self.Play_Fox.clicked.connect(self.fox)
+        self.Play_Dungeon.clicked.connect(self.dungeon)
+        self.Play_Wheel.clicked.connect(self.wheel)
+        data = eval(open('user data.txt', 'r').read())
+        self.User.setText(f'Hello {data[1]}')
+        print(1)
+        self.Coin.setText(f'Coins: {data[-1]}')
+
+    def initUi(self):
+        # Интерфейс инициализации
+        # Переключить порядковый номер в QStackedWidget на текущее изменение элемента QListWidget
+        self.listWidget.currentRowChanged.connect(
+            self.stackedWidget.setCurrentIndex)
+
+        # Удалить border
+        self.listWidget.setFrameShape(QListWidget.NoFrame)
+        # Скрыть полосу прокрутки
+        self.listWidget.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.listWidget.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        # Здесь мы используем общий текст с режимом значков
+        # (вы также можете использовать режим значков, setViewMode напрямую)
+        for i in self.names:
+            item = QListWidgetItem(str(i), self.listWidget)
+            # Установите ширину и высоту элемента по умолчанию (здесь полезна только высота)
+            item.setSizeHint(QSize(16777215, 60))
+            # Текст по центру
+            item.setTextAlignment(Qt.AlignCenter)
+
+    def fox(self):
+        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/CrazyFox/main.pyw')}", shell=False)
+        sys.exit(app.exec())
+
+    def dungeon(self):
+        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Dungeon/main.pyw')}", shell=False)
+        sys.exit(app.exec())
+
+    def wheel(self):
+        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Wheel/main.pyw')}", shell=True)
+        print(1)
+        sys.exit(app.exec())
 
 
+# style sheet
+Stylesheet = """
+QListWidget, QListView, QTreeWidget, QTreeView {
+    outline: 2px;
+}
+QListWidget {
+    min-width: 150px;
+    max-width: 150px;
+}
+QListWidget::item:selected {
+    border-left: 2px solid rgb(9, 187, 7);"""
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

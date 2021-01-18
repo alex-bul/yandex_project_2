@@ -4,6 +4,8 @@ import time
 import pygame
 from os import path
 
+os.chdir('Game\\Dungeon\\')
+
 pygame.init()
 size = width, height = 1920, 1080  # Размер окна
 pygame.display.set_caption('Dungeon')
