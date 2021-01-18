@@ -25,7 +25,6 @@ end_change = False
 end_game = False
 win = ''
 
-
 # Функция загрузки изображений
 def load_image(name, color_key=None, scale=None):
     fullname = path.join('Res', name)
@@ -154,8 +153,9 @@ class Character(pygame.sprite.Sprite):
                             time.sleep(0.5)
                         else:
                             draw(screen, view=str(-int(self.damage - (i.armor / 2) * res)), x=i.rect.center[0],
-                                 y=i.rect.center[1], cent=True, size=50,
-                                 color='Red')
+                                 y=i.rect.center[1], cent=True, size=50, color='Red')
+                            death_sound.play()
+
                             pygame.display.flip()
                             time.sleep(0.5)
                         if (self.damage - (i.armor / 2)) * res > 0:
