@@ -2,6 +2,7 @@ import pygame
 import os
 import random
 import sqlite3
+import time
 
 pygame.init()
 size = width, height = 1200, 800
@@ -33,29 +34,6 @@ def load_image(name, color_key=None):
     return image
 
 
-def results():
-    global coin, chose, deg
-    if ((0 <= deg <= 25.5) or (77 <= deg <= 128.5) or (180 <= deg <= 231.5) or (
-            334.5 <= deg <= 360)) and chose == 'Black':
-        coin += bet * 2
-    elif (283 <= deg <= 334.5) and chose == 'Green':
-        coin += bet * 5
-    elif ((25.5 <= deg <= 77) or (128.5 <= deg <= 180) or (231.5 <= deg <= 283)) and chose == 'Red':
-        coin += bet * 2
-    update_data_base()
-
-
-def update_data_base():
-    con = sqlite3.connect("Res/data.db")
-    cur = con.cursor()
-    cur.execute(f"""UPDATE data SET score = '{coin}' WHERE login = '{data[2]}'""")
-    result = list(cur.execute(f"""SELECT * FROM data where login = '{data[2]}'""").fetchone())
-    with open('user data.txt', 'w') as f:
-        f.write(str(result))
-    con.commit()
-    con.close()
-
-
 def draw(screen, view, x, y, cent, size=50):
     font = pygame.font.Font(None, size)
     text = font.render(view, True, (0, 0, 0))
@@ -67,6 +45,36 @@ def draw(screen, view, x, y, cent, size=50):
         text_y = y
 
     screen.blit(text, (text_x, text_y))
+
+
+def results():
+    global coin, chose, deg, screen
+    if ((0 <= deg <= 25.5) or (77 <= deg <= 128.5) or (180 <= deg <= 231.5) or (
+            334.5 <= deg <= 360)):
+        if chose == 'Black':
+            coin += bet * 2
+        win = "Black"
+    elif 283 <= deg <= 334.5:
+        if chose == 'Green':
+            coin += bet * 5
+        win = "Green"
+    elif (25.5 <= deg <= 77) or (128.5 <= deg <= 180) or (231.5 <= deg <= 283):
+        if chose == 'Red':
+            coin += bet * 2
+        win = "Red"
+    update_data_base()
+    draw(screen, view=f'Color is {win}', x=width // 2, y=80, cent=True, size=50)
+
+
+def update_data_base():
+    con = sqlite3.connect("Res/data.db")
+    cur = con.cursor()
+    cur.execute(f"""UPDATE data SET score = '{coin}' WHERE login = '{data[2]}'""")
+    result = list(cur.execute(f"""SELECT * FROM data where login = '{data[2]}'""").fetchone())
+    with open('user data.txt', 'w') as f:
+        f.write(str(result))
+    con.commit()
+    con.close()
 
 
 def rot_center(image, rect, angle):
@@ -133,14 +141,14 @@ deduct_sum.image = deduct_sum_image
 deduct_sum.rect = deduct_sum.image.get_rect()
 deduct_sum.rect.center = add_sum.rect.center[0] + 90, add_sum.rect.center[1]
 
-hero_image = load_image('wheel4.png')
-hero = pygame.sprite.Sprite(all_sprites)
-hero.image = hero_image
-hero.rect = hero.image.get_rect()
-hero.rect.center = width // 2, height // 2
-defhero_image = load_image('wheel4.png')
-defhero = pygame.sprite.Sprite()
-defhero.image = hero_image
+wheel_image = load_image('wheel4.png')
+wheel = pygame.sprite.Sprite(all_sprites)
+wheel.image = wheel_image
+wheel.rect = wheel.image.get_rect()
+wheel.rect.center = width // 2, height // 2
+defwheel_image = load_image('wheel4.png')
+defwheel = pygame.sprite.Sprite()
+defwheel.image = wheel_image
 
 arrow_image = load_image('arrow.png')
 arrow = pygame.sprite.Sprite(all_sprites)
@@ -161,11 +169,9 @@ while running:
                 if (mous_x in range(list(i.rect)[0], list(i.rect)[0] + list(i.rect)[2])) and (
                         mous_y in range(list(i.rect)[1], list(i.rect)[1] + list(i.rect)[3])):
                     centre = i.rect.center
-                    print(centre)
                     if centre == (1130, 400) and deg != 0:
-                        print('deg = 0')
                         coin -= 10
-                        hero.image, hero.rect, deg = rot_center(defhero.image, hero.rect, 0)
+                        wheel.image, wheel.rect, deg = rot_center(defwheel.image, wheel.rect, 0)
                     elif centre == (1040, 400):
                         chose = 'Black'
                     elif centre == (950, 400):
@@ -205,9 +211,10 @@ while running:
                 speed -= 0.09 * cof
             if speed <= 0 and cof == 1 or speed >= 0 and cof == -1:
                 results()
+                pygame.display.flip()
+                time.sleep(1.5)
                 spin = False
-                print(deg)
-            hero.image, hero.rect, deg = rot_center(defhero.image, hero.rect, (deg - speed) % 360)
+            wheel.image, wheel.rect, deg = rot_center(defwheel.image, wheel.rect, (deg - speed) % 360)
 
     screen.fill((255, 255, 255))
     all_sprites.draw(screen)
