@@ -4,7 +4,6 @@ import time
 import pygame
 from os import path
 
-
 pygame.init()
 size = width, height = 1920, 1080  # Размер окна
 pygame.display.set_caption('Dungeon')
@@ -23,15 +22,13 @@ player_1_sum_health = 0
 player_2_sum_health = 0
 enter = False
 end_change = False
-snd_dir = path.join(path.dirname(__file__), 'Res')
-pygame.mixer.music.set_volume(1)
-death_sound = pygame.mixer.Sound(path.join(snd_dir, 'AAA.mp3'))
-
+end_game = False
+win = ''
 
 
 # Функция загрузки изображений
 def load_image(name, color_key=None, scale=None):
-    fullname = os.path.join('Res', name)
+    fullname = path.join('Res', name)
     try:
         image = pygame.image.load(fullname)
         if scale:
@@ -134,7 +131,7 @@ class Character(pygame.sprite.Sprite):
     # Обновление действий с персонадами
     def update(self, *args):
         global rounds, end_change
-        if 'pos' in str(args[0]) and not self.health <= 0 and rounds % 2 in self.motion:
+        if 'pos' in str(args[0]) and not self.health <= 0 and rounds % 2 in self.motion and not end_game:
             if args[0].type == pygame.MOUSEBUTTONUP and args[0].button == 1 and self.rect.collidepoint(
                     args[0].pos) and self.click:
                 self.click = False
@@ -144,7 +141,6 @@ class Character(pygame.sprite.Sprite):
                             and self.name[:-1] != i.name[:-1]:
                         if self.sprite_name == 'Assassin':
                             rounds -= 0.5
-                        death_sound.play()
                         end_change = True
                         self.flag = True
                         print('-------------------------')
@@ -191,7 +187,6 @@ class Character(pygame.sprite.Sprite):
             self.rect.bottomleft = self.def_rect
 
 
-
 # Класс Ассасина
 class Assassin(Character):
     def __init__(self, x, y, name=f'None'):
@@ -199,7 +194,7 @@ class Assassin(Character):
         self.chance = 80
         self.health = 150
         self.def_health = self.health
-        self.damage = 50
+        self.damage = 35
         self.armor = 37
 
 
@@ -239,12 +234,14 @@ while running:
         else:
             change = False
 
+        if not player_1_sum_health and not player_2_sum_health:
+            change = False
+
         if event.type == pygame.QUIT:
             running = False
 
         if key[pygame.K_RETURN]:
             enter = True
-            print(1)
 
         # Добавление персонажей
         if (key[pygame.K_RIGHT] and (key[pygame.K_1] or key[pygame.K_2]) and not change and len(
@@ -310,15 +307,27 @@ while running:
             color = 'Red'
         draw(screen=screen, view=str(i.health), x=i.rect.center[0], y=i.rect.bottom - 90, cent=True, size=40,
              color=color)
-
-    if rounds % 2 in [0, 0.5]:
-        draw(screen, view='<=', x=width // 2, y=y - 30, cent=True, size=50, color='Red')
-    else:
-        draw(screen, view='=>', x=width // 2, y=y - 30, cent=True, size=50, color='Red')
+    if player_1_sum_health == 0 or player_2_sum_health == 0:
+        end_game = True
 
     draw(screen=screen, view=f'{player_1_sum_health} vs {player_2_sum_health}', x=width // 2, y=y - 150, cent=True,
          size=60,
          color='Green')
+
+    if rounds % 2 in [0, 0.5] and not end_game:
+        draw(screen, view='<=', x=width // 2, y=y - 30, cent=True, size=50, color='Red')
+    elif rounds % 2 in [1, 1.5] and not end_game:
+        draw(screen, view='=>', x=width // 2, y=y - 30, cent=True, size=50, color='Red')
+    else:
+        if player_1_sum_health == 0:
+            win = 'Player 1 WIN'
+        if player_2_sum_health == 0:
+            win = 'Player 2 WIN'
+        draw(screen, view=win, x=width // 2, y=y - 30, cent=True, size=50, color='Red')
+        pygame.display.flip()
+        time.sleep(10)
+        running = False
+
     clock.tick(fps)
     pygame.display.flip()
 pygame.quit()
