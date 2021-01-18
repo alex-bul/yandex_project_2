@@ -73,7 +73,7 @@ def update_data_base():
     cur = con.cursor()
     cur.execute(f"""UPDATE data SET score = '{coin}' WHERE login = '{data[2]}'""")
     result = list(cur.execute(f"""SELECT * FROM data where login = '{data[2]}'""").fetchone())
-    with open('user data.txt', 'w') as f:
+    with open('..//..//user data.txt', 'w') as f:
         f.write(str(result))
     con.commit()
     con.close()
