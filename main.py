@@ -143,13 +143,58 @@ class Launcher(QMainWindow):
         sys.exit(app.exec())
 
     def dungeon(self):
-        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Dungeon/main.pyw')}", shell=False)
-        sys.exit(app.exec())
+        self.close()
+        self.dungeon = Dungeon()
+        self.dungeon.show()
 
     def wheel(self):
         subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Wheel/main.pyw')}", shell=True)
         print(1)
         sys.exit(app.exec())
+
+
+class Dungeon(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('UI/Join_to_dungeon.ui', self)
+        self.setWindowTitle('Join to Dungeon')
+        self.btn_Play.clicked.connect(self.enter)
+        self.btn_Free.clicked.connect(self.free)
+
+    def play(self):
+        pass
+
+    def free(self):
+        pass
+
+    def enter(self):
+        con = sqlite3.connect("Res/data.db")
+        cur = con.cursor()
+        logins = [str(list(i)[0]) for i in cur.execute("""SELECT login FROM data""").fetchall()]
+        login_1 = str(self.login_Player_1.text().strip())
+        login_2 = str(self.login_Player_2.text().strip())
+        password_1 = str(self.pass_Player_1.text().strip())
+        password_2 = str(self.pass_Player_2.text().strip())
+
+        if login_1 == '' or login_2 == '':
+            self.error.setText('Login has empty')
+        elif login_1 == login_2:
+            self.error.setText('The logins are the same')
+        elif password_1 == '' or password_2 == '':
+            self.error.setText('Password has empty')
+        elif (login_1 not in logins or login_2 not in logins) or (password_1 != str(
+                cur.execute(f"""SELECT pass FROM data where login = '{login_1}'""").fetchall()[0][0]) \
+                or password_2 != str(
+            cur.execute(f"""SELECT pass FROM data where login = '{login_2}'""").fetchall()[0][0])):
+            self.error.setText('Invalid login or password')
+        else:
+            self.error.setText('')
+
+    def guest(self):
+        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Dungeon/main.pyw')}", shell=False)
+
+    def run(self):
+        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Dungeon/main.pyw')}", shell=False)
 
 
 # style sheet
