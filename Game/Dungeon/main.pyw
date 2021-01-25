@@ -3,8 +3,17 @@ import random
 import time
 import pygame
 from os import path
+import sys
+import sqlite3
 
+guest = False
 os.chdir('Game\\Dungeon\\')
+
+try:
+    coin, login1, login2, *argss = sys.argv[1:]
+except:
+    guest = True
+print(sys.argv[1:])
 
 pygame.init()
 size = width, height = 1920, 1080  # Размер окна
@@ -26,6 +35,7 @@ enter = False
 end_change = False
 end_game = False
 win = ''
+
 
 # Функция загрузки изображений
 def load_image(name, color_key=None, scale=None):
@@ -81,6 +91,18 @@ def draw(screen, view, x, y, cent, size=50, color=None):
         text_y = y
 
     screen.blit(text, (text_x, text_y))
+
+
+def update_data_base(winner, loser):
+    con = sqlite3.connect("..//..//Res/data.db")
+    cur = con.cursor()
+    cur.execute(f"""UPDATE data SET score = score + '{coin}' WHERE login = '{winner}'""")
+    cur.execute(f"""UPDATE data SET score = score - '{coin}' WHERE login = '{loser}'""")
+    result = list(cur.execute(f"""SELECT * FROM data where login = '{winner}'""").fetchone())
+    with open('..//..//user data.txt', 'w') as f:
+        f.write(str(result))
+    con.commit()
+    con.close()
 
 
 class Background(pygame.sprite.Sprite):
@@ -156,7 +178,6 @@ class Character(pygame.sprite.Sprite):
                         else:
                             draw(screen, view=str(-int(self.damage - (i.armor / 2) * res)), x=i.rect.center[0],
                                  y=i.rect.center[1], cent=True, size=50, color='Red')
-                            death_sound.play()
 
                             pygame.display.flip()
                             time.sleep(0.5)
@@ -322,9 +343,18 @@ while running:
         draw(screen, view='=>', x=width // 2, y=y - 30, cent=True, size=50, color='Red')
     else:
         if player_1_sum_health == 0:
-            win = 'Player 1 WIN'
-        if player_2_sum_health == 0:
             win = 'Player 2 WIN'
+            if not guest:
+                winner = login2
+                loser = login1
+                update_data_base(winner, loser)
+        if player_2_sum_health == 0:
+            win = 'Player 1 WIN'
+            if not guest:
+                winner = login1
+                loser = login2
+                update_data_base(winner, loser)
+
         draw(screen, view=win, x=width // 2, y=y - 30, cent=True, size=50, color='Red')
         pygame.display.flip()
         time.sleep(10)
