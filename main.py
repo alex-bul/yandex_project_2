@@ -159,7 +159,7 @@ class Dungeon(QMainWindow):
         uic.loadUi('UI/Join_to_dungeon.ui', self)
         self.setWindowTitle('Join to Dungeon')
         self.btn_Play.clicked.connect(self.enter)
-        self.btn_Free.clicked.connect(self.free)
+        self.btn_Free.clicked.connect(self.guest)
 
     def play(self):
         pass
@@ -184,17 +184,20 @@ class Dungeon(QMainWindow):
             self.error.setText('Password has empty')
         elif (login_1 not in logins or login_2 not in logins) or (password_1 != str(
                 cur.execute(f"""SELECT pass FROM data where login = '{login_1}'""").fetchall()[0][0]) \
-                or password_2 != str(
-            cur.execute(f"""SELECT pass FROM data where login = '{login_2}'""").fetchall()[0][0])):
+                                                                  or password_2 != str(
+                    cur.execute(f"""SELECT pass FROM data where login = '{login_2}'""").fetchall()[0][0])):
             self.error.setText('Invalid login or password')
         else:
             self.error.setText('')
+            self.run(login_1, login_2)
 
     def guest(self):
-        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Dungeon/main.pyw')}", shell=False)
+        print(1)
+        os.system('python ' + f"{os.path.abspath('Game/Dungeon/main.pyw')}")
 
-    def run(self):
-        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Dungeon/main.pyw')}", shell=False)
+    def run(self, login_1, login_2):
+        print(1)
+        os.system('python ' + f"{os.path.abspath('Game/Dungeon/main.pyw')} {self.bet.value()} {login_1} {login_2}")
 
 
 # style sheet
