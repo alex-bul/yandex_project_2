@@ -112,14 +112,15 @@ class Launcher(QMainWindow):
         self.Dungeon.setStyleSheet("background-image: url(Res/Dungeon.png)")
         self.Wheel.setStyleSheet("background-image: url(Res/Wheel.png)")
         self.SovietEmpire.setStyleSheet("background-image: url(Res/SovietEmpire.png)")
+        self.Labirint.setStyleSheet("background-image: url(Res/Labirint.png)")
+        self.SnusBusters.setStyleSheet("background-image: url(Res/SnusBusters.png)")
+        self.Play_SnusBusters.clicked.connect(self.snusbusters)
+        self.Play_Labirint.clicked.connect(self.labirint)
         self.Play_Fox.clicked.connect(self.fox)
         self.Play_Dungeon.clicked.connect(self.dungeon)
         self.Play_Wheel.clicked.connect(self.wheel)
         print(1)
-        try:
-            self.Play_SovietEmpire.clicked.connect(self.soviet)
-        except Exception as e:
-            print(e)
+        self.Play_SovietEmpire.clicked.connect(self.soviet)
         data = eval(open('user data.txt', 'r').read())
         self.User.setText(f'Hello {data[1]}')
         print(1)
@@ -156,12 +157,20 @@ class Launcher(QMainWindow):
         self.dun = True
         self.close()
 
+    def labirint(self):
+        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Labirint/main.pyw')}", shell=False)
+        print(1)
+
+    def snusbusters(self):
+        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/SnusBusters/main.pyw')}", shell=False)
+        print(1)
+
     def soviet(self):
-        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/SovietEmpire/main.pyw')}", shell=True)
+        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/SovietEmpire/main.pyw')}", shell=False)
         print(1)
 
     def wheel(self):
-        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Wheel/main.pyw')}", shell=True)
+        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Wheel/main.pyw')}", shell=False)
         print(1)
 
     def keyPressEvent(self, event):
