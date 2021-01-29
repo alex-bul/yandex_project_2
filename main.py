@@ -92,6 +92,10 @@ class Start_Window(QMainWindow):
         self.launcher = Launcher()
         self.launcher.show()
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.close()
+
 
 class Launcher(QMainWindow):
     def __init__(self):
@@ -116,6 +120,7 @@ class Launcher(QMainWindow):
         self.User.setText(f'Hello {data[1]}')
         print(1)
         self.Coin.setText(f'Coins: {data[-1]}')
+        self.dun = False
 
     def initUi(self):
         # Интерфейс инициализации
@@ -140,17 +145,28 @@ class Launcher(QMainWindow):
 
     def fox(self):
         subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/CrazyFox/main.pyw')}", shell=False)
-        sys.exit(app.exec())
 
     def dungeon(self):
-        self.close()
         self.dungeon = Dungeon()
         self.dungeon.show()
+        self.dun = True
+        self.close()
 
     def wheel(self):
         subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Wheel/main.pyw')}", shell=True)
         print(1)
-        sys.exit(app.exec())
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.close()
+            self.start_window = Start_Window()
+            self.start_window.show()
+
+    def closeEvent(self, event):
+        self.close()
+        if not self.dun:
+            self.start_window = Start_Window()
+            self.start_window.show()
 
 
 class Dungeon(QMainWindow):
@@ -160,12 +176,6 @@ class Dungeon(QMainWindow):
         self.setWindowTitle('Join to Dungeon')
         self.btn_Play.clicked.connect(self.enter)
         self.btn_Free.clicked.connect(self.guest)
-
-    def play(self):
-        pass
-
-    def free(self):
-        pass
 
     def enter(self):
         con = sqlite3.connect("Res/data.db")
@@ -198,6 +208,17 @@ class Dungeon(QMainWindow):
     def run(self, login_1, login_2):
         print(1)
         os.system('python ' + f"{os.path.abspath('Game/Dungeon/main.pyw')} {self.bet.value()} {login_1} {login_2}")
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.launcher = Launcher()
+            self.launcher.show()
+            self.close()
+
+    def closeEvent(self, event):
+        self.close()
+        self.launcher = Launcher()
+        self.launcher.show()
 
 
 # style sheet
