@@ -2,8 +2,6 @@ import sqlite3
 import sys
 import os
 import subprocess
-import pathlib
-from random import randint
 from PyQt5 import (uic, QtWidgets, QtGui)
 from PyQt5.Qt import (QImage, QPalette, QBrush)
 from PyQt5.QtCore import Qt, QSize
@@ -113,9 +111,15 @@ class Launcher(QMainWindow):
         self.Crazy_Fox.setStyleSheet("background-image: url(Res/Crazy Fox.png)")
         self.Dungeon.setStyleSheet("background-image: url(Res/Dungeon.png)")
         self.Wheel.setStyleSheet("background-image: url(Res/Wheel.png)")
+        self.SovietEmpire.setStyleSheet("background-image: url(Res/SovietEmpire.png)")
         self.Play_Fox.clicked.connect(self.fox)
         self.Play_Dungeon.clicked.connect(self.dungeon)
         self.Play_Wheel.clicked.connect(self.wheel)
+        print(1)
+        try:
+            self.Play_SovietEmpire.clicked.connect(self.soviet)
+        except Exception as e:
+            print(e)
         data = eval(open('user data.txt', 'r').read())
         self.User.setText(f'Hello {data[1]}')
         print(1)
@@ -151,6 +155,10 @@ class Launcher(QMainWindow):
         self.dungeon.show()
         self.dun = True
         self.close()
+
+    def soviet(self):
+        subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/SovietEmpire/main.pyw')}", shell=True)
+        print(1)
 
     def wheel(self):
         subprocess.Popen('cmd.exe /c start' + f" {os.path.abspath('Game/Wheel/main.pyw')}", shell=True)
