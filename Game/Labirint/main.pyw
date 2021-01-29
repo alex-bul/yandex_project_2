@@ -1,8 +1,10 @@
 import pygame
+import os
 import Options
 import random
 
 os.chdir('Game\\Labirint\\')
+
 
 class Scorebar(pygame.sprite.Sprite):
     def __init__(self, players):
